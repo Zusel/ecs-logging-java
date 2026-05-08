@@ -52,6 +52,7 @@ import org.apache.logging.log4j.util.PropertiesUtil;
 import org.apache.logging.log4j.util.StringBuilderFormattable;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -163,6 +164,7 @@ public class EcsLayout extends AbstractStringLayout {
 
     private void serializeAdditionalFieldsAndMDC(LogEvent event, StringBuilder builder) {
         final int length = additionalFields.length;
+        List<String> usedKeys = new ArrayList<>();
         if (length > 0) {
             final StrSubstitutor strSubstitutor = getConfiguration().getStrSubstitutor();
             for (int i = 0; i < length; i++) {
@@ -186,8 +188,13 @@ public class EcsLayout extends AbstractStringLayout {
                 }
 
                 if (value != null) {
+                    String keyName = additionalField.getKey();
+                    if(usedKeys.contains(keyName)){
+                        keyName = keyName + "_duplicate_key_" + i ;
+                    }
+                    usedKeys.add(keyName);
                     builder.append('\"');
-                    JsonUtils.quoteAsString(additionalField.getKey(), builder);
+                    JsonUtils.quoteAsString(keyName, builder);
                     builder.append("\":\"");
                     JsonUtils.quoteAsString(EcsJsonSerializer.toNullSafeString(value), builder);
                     builder.append("\",");
